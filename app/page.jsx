@@ -6,6 +6,7 @@ export default function Page() {
 
   const [items, setItems] = useState([]);
   const [text, setText] = useState("");
+  const [error, setError] = useState(null);
 
   // --- ITEMS BETÖLTÉSE ---
   async function loadItems() {
@@ -47,6 +48,18 @@ export default function Page() {
   }
 
   useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    fetch(apiUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error("Hálózati hiba: " + res.status);
+        return res.json();
+      })
+      .then((data) => setItems(data))
+      .catch((err) => setError(err.message));
+  }, []);
+
+  useEffect(() => {
     loadItems();
   }, []);
 
@@ -57,6 +70,8 @@ export default function Page() {
         <h1 className="text-2xl font-bold mb-4 text-center">
           🛒 Bevásárlólista
         </h1>
+
+        {error && <p style={{ color: "red" }}>Hiba: {error}</p>}
 
         {/* Input + gomb */}
         <form
