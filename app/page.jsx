@@ -2,26 +2,34 @@
 import { useState, useEffect } from "react";
 
 export default function Page() {
-  const API = "http://localhost/ShoppingList/backend/";
-
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL; // globális komponens szinten
   const [items, setItems] = useState([]);
   const [text, setText] = useState("");
   const [error, setError] = useState(null);
 
   // --- ITEMS BETÖLTÉSE ---
   async function loadItems() {
-    const res = await fetch(API + "getItems.php");
-    const data = await res.json();
-    setItems(data);
+    try {
+      const res = await fetch(apiUrl + "getItems.php");
+      if (!res.ok) throw new Error("Hálózati hiba: " + res.status);
+      const data = await res.json();
+      setItems(data);
+    } catch (err) {
+      setError(err.message);
+    }
   }
+
+  useEffect(() => {
+    loadItems();
+  }, []);
 
   // --- ÚJ TÉTEL HOZZÁADÁSA ---
   async function addItem() {
     if (!text.trim()) return;
-    await fetch(API + "addItem.php", {
+    await fetch(apiUrl + "addItem.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: text })
+      body: JSON.stringify({ name: text }),
     });
     setText("");
     loadItems();
@@ -29,54 +37,33 @@ export default function Page() {
 
   // --- PIPÁLÁS ---
   async function toggleItem(id, checked) {
-    await fetch(API + "toggleItem.php", {
+    await fetch(apiUrl + "toggleItem.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, checked })
+      body: JSON.stringify({ id, checked }),
     });
     loadItems();
   }
 
   // --- TÖRLÉS ---
   async function deleteItem(id) {
-    await fetch(API + "deleteItem.php", {
+    await fetch(apiUrl + "deleteItem.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id }),
     });
     loadItems();
   }
 
-  useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-    fetch(apiUrl)
-      .then((res) => {
-        if (!res.ok) throw new Error("Hálózati hiba: " + res.status);
-        return res.json();
-      })
-      .then((data) => setItems(data))
-      .catch((err) => setError(err.message));
-  }, []);
-
-  useEffect(() => {
-    loadItems();
-  }, []);
-
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-6 flex justify-center">
       <div className="w-full max-w-md bg-white shadow-xl rounded-2xl p-6">
-
-        <h1 className="text-2xl font-bold mb-4 text-center">
-          🛒 Bevásárlólista
-        </h1>
-
+        <h1 className="text-2xl font-bold mb-4 text-center">🛒 Bevásárlólista</h1>
         {error && <p style={{ color: "red" }}>Hiba: {error}</p>}
 
-        {/* Input + gomb */}
         <form
           onSubmit={e => {
-            e.preventDefault(); // ne töltse újra az oldalt
+            e.preventDefault();
             addItem();
           }}
           className="flex gap-2 mb-5"
@@ -87,51 +74,31 @@ export default function Page() {
             placeholder="Új tétel..."
             className="flex-grow border rounded-xl px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-400 outline-none"
           />
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl shadow"
-          >
+          <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl shadow">
             &#10010;
           </button>
         </form>
 
-        {/* Lista */}
         <ul className="space-y-3">
           {items.map(i => (
-            <li
-              key={i.id}
-              className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-xl shadow-sm"
-            >
+            <li key={i.id} className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-xl shadow-sm">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={i.checked == 1}
-                  onChange={() =>
-                    toggleItem(i.id, i.checked == 1 ? 0 : 1)
-                  }
+                  onChange={() => toggleItem(i.id, i.checked == 1 ? 0 : 1)}
                   className="w-5 h-5"
                 />
-
-                <span
-                  className={
-                    "text-lg " +
-                    (i.checked == 1 ? "line-through text-gray-400" : "")
-                  }
-                >
+                <span className={"text-lg " + (i.checked == 1 ? "line-through text-gray-400" : "")}>
                   {i.name}
                 </span>
               </div>
-
-              <button
-                onClick={() => deleteItem(i.id)}
-                className="text-red-500 hover:text-red-700 text-xl"
-              >
+              <button onClick={() => deleteItem(i.id)} className="text-red-500 hover:text-red-700 text-xl">
                 ❌
               </button>
             </li>
           ))}
         </ul>
-
       </div>
     </div>
   );
