@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # 1. MySQL Adatbázis Konténer
+  db:
+    image: mysql:8.0
+    container_name: shoppinglist-mysql
+    restart: always
+    environment:
+      # Fontos: cseréld le ezeket a titkos adatokat!
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-shoppinglist}
+      MYSQL_USER: ${DB_USER:-symfony}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-symfony_secret}
+    ports:
+      # Hozzáférés a 3306-os porton a host gépről
+      - "3306:3306"
+    volumes:
+      # Adatok perzisztálása a /data/mysql mappában
+      - ./data/mysql:/var/lib/mysql
+
+  # 2. Symfony/PHP Backend Konténer
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shoppinglist-backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    volumes:
+      # A helyi Symfony kód megosztása a konténerrel
+      - ./backend:/var/www/html
+    # Ha szeretnéd direktben futtatni a Symfony CLI parancsokat:
+    # command: sh -c "composer install && php-fpm"
+
+  # 3. Next.js Frontend Konténer
+  frontend:
+    image: node:20-alpine
+    container_name: shoppinglist-frontend
+    restart: unless-stopped
+    volumes:
+      # A helyi Next.js kód megosztása a konténerrel
+      - ./frontend:/app
+    working_dir: /app
+    ports:
+      # A Next.js fejlesztői szerver portja (általában 3000)
+      - "3000:3000"
+    command: sh -c "npm install && npm run dev"
+    # Azt feltételezve, hogy a 'dev' parancs futtatja a fejlesztői szervert
+
+  # 4. Nginx Webszerver Konténer
+  nginx:
+    image: nginx:stable-alpine
+    container_name: shoppinglist-nginx
+    restart: unless-stopped
+    ports:
+      # Exponálja a 80-as portot a host gépre
+      - "80:80"
+    volumes:
+      # Megosztja a Symfony kódunkat, hogy ki tudja szolgálni a statikus fájlokat
+      - ./backend:/var/www/html
+      # Itt illesztjük be az Nginx konfigurációs fájlt a konténerbe
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend # Függ a PHP-FPM konténerünktől

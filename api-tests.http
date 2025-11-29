@@ -1,0 +1,55 @@
+@host = http://localhost
+@listId = 1
+@ownerId = 1
+
+
+
+# 1. Lista létrehozása (POST /api/shopping_lists)
+#    A LISTA NEVÉT KELL MEGADNI.
+POST {{host}}/api/shopping_lists
+Content-Type: application/json
+
+{
+    "name": "Sürgős gyógyszertári lista"
+}
+
+###
+
+GET  {{host}}/api/shopping_lists
+
+###
+
+GET  {{host}}/api/shopping_list_items
+
+###
+
+# 2. Tétel hozzáadása egy listához (POST /api/shopping_lists/{listId}/shopping_list_items)
+POST {{host}}/api/shopping_lists/{{listId}}/shopping_list_items
+Content-Type: application/json
+
+{
+    "name": "Sajt",
+    "quantity": "1 kg"
+}
+
+###
+
+# 3. Tétel készre jelölése (PATCH /api/shopping_list_items/{id})
+PATCH {{host}}/api/shopping_list_items/5
+Content-Type: application/json
+
+{
+    "isCompleted": true
+}
+
+###
+
+# 4. Item törlése (DELETE /api/lists/{id})
+DELETE {{host}}/api/shopping_list_items/2
+
+###
+
+# 4. Lista törlése (DELETE /api/lists/{id})
+DELETE {{host}}/api/shopping_lists/5
+
+###
