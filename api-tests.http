@@ -1,11 +1,11 @@
 @host = http://localhost
 @listId = 1
 @ownerId = 1
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjQ0NDgxOTIsImV4cCI6MTc2NDQ1MTc5Miwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSJ9.blxz1vVuQqTv8G2ytkuvFF1VOY6F6ym53irLfGr5pQU8QMX9445VwFOaMeAvF-7h1nWNosbqGssXbwZWKGk6xKU7hcDSA7r4Ob0L0PDP69bRBz7U8dTSFNCHigDBlTgy5taTgdkRKx1gBC7CO5_bw-vvIy6MsIqtv0Xdz7A-MMZNbb3FH6rJM4mgguWheuZK_LtnVRx__k9n6-2QQANqQExqwFy3x2qMV5Srjr3lcvOv0eLO3LnqukKQQvu9rZ6b2ocMUaB8ZeVFpzyOp60MTk0Uu_AisPe0mrO8UDQ0Ufb9zsUT5o3CUHnysIXucU355LSxoMEDGDNtL0qFCYXmptrPq769WAeR2-1uTGSucXFHs4lJsrDXYiDJwY79XJEv8KrkubLXc7H2rjZo67ZRmPKQAQmVQ3O7ltByk3Oh1yUQxLOCzevXloMSPrbys_OmI0dqTipIYJAbipLmOxxMtWYePPO2NuTwZY-qBnwJLzAjajddH5Kgnwwpfb-H931Ex-q4FJaQvPtPYJxceBf_XSStJKgC96qIzzz78zDNUXYXEI52V7t1cwwSzmJdUtdCsf2BHTx5XAW9p092RhCAsJ2meIFdBH_KE-GY9Kg6XVD8wKyXu1StztNefpRSbQQU2pzCsikwVsW9yCbENz7msTshcLdJ6b2MaTI_f87qoEo
 
 
 
-# 1. Lista létrehozása (POST /api/shopping_lists)
-#    A LISTA NEVÉT KELL MEGADNI.
+# Lista létrehozása (POST /api/shopping_lists)
 POST {{host}}/api/shopping_lists
 Content-Type: application/json
 
@@ -13,17 +13,21 @@ Content-Type: application/json
     "name": "Sürgős gyógyszertári lista"
 }
 
-###
 
-GET  {{host}}/api/shopping_lists
 
-###
+# Hitelesített Kérés (Listák Lekérdezése)
+GET http://localhost/api/shopping_lists
+Authorization: Bearer {{token}}
+Accept: application/json
 
+
+
+# Az össes item lekérdezése
 GET  {{host}}/api/shopping_list_items
 
-###
 
-# 2. Tétel hozzáadása egy listához (POST /api/shopping_lists/{listId}/shopping_list_items)
+
+# Tétel hozzáadása egy listához (POST /api/shopping_lists/{listId}/shopping_list_items)
 POST {{host}}/api/shopping_lists/{{listId}}/shopping_list_items
 Content-Type: application/json
 
@@ -32,9 +36,9 @@ Content-Type: application/json
     "quantity": "1 kg"
 }
 
-###
 
-# 3. Tétel készre jelölése (PATCH /api/shopping_list_items/{id})
+
+# Tétel készre jelölése (PATCH /api/shopping_list_items/{id})
 PATCH {{host}}/api/shopping_list_items/5
 Content-Type: application/json
 
@@ -42,14 +46,23 @@ Content-Type: application/json
     "isCompleted": true
 }
 
-###
 
-# 4. Item törlése (DELETE /api/lists/{id})
+
+# Item törlése (DELETE /api/lists/{id})
 DELETE {{host}}/api/shopping_list_items/2
 
-###
 
-# 4. Lista törlése (DELETE /api/lists/{id})
+
+# Lista törlése (DELETE /api/lists/{id})
 DELETE {{host}}/api/shopping_lists/5
 
-###
+
+
+# Bejelentkezés (Token Szerzés)
+POST http://localhost/api/login_check
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "tesztjelszo"
+}

@@ -1,39 +1,59 @@
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    # --- 1. PASSWORD HASHERS ---
     password_hashers:
+        # A felhasználó entitásod (App\Entity\User) meg kell feleljen ennek az interfésznek
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+
+    # --- 2. PROVIDERS: Honnan töltjük be a felhasználókat ---
     providers:
-        users_in_memory: { memory: null }
+        # Itt megadjuk, hogy a felhasználókat a saját User entitásunkból töltjük be,
+        # az email mezőt használva bejelentkezési azonosítóként.
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    # --- 3. FIREWALLS: Tűzfalak beállítása ---
     firewalls:
+        # Fejlesztői környezet (debug, profiler) - kihagyjuk a security ellenőrzést
         dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            pattern: ^/(_profiler|_wdt|/css|/images|/js)/
             security: false
-        main:
-            lazy: true
-            provider: users_in_memory
 
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
+        # API FIREWALL: Minden /api/ kezdetű kérés
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+            # --- VÁLTOZTATÁS ITT! jwt_json_login HELYETT json_login ---
+            json_login: # <<< Ezt használd!
+                check_path: /api/login_check
+                username_path: email
+                password_path: password
+                # A Lexik Bundle sikeres kezelőjét rendeljük hozzá
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+            # A JWT ellenőrzés mechanizmusa
+            jwt: ~
+            entry_point: jwt
+
+    # --- 4. ACCESS CONTROL: Jogosultsági szabályok ---
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # Engedélyezzük az anonim hozzáférést a bejelentkezési útvonalhoz,
+        # különben senki nem tudna bejelentkezni.
+        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
+        # Minden más /api/ kezdetű útvonalhoz (a login_check kivételével)
+        # TELJESEN HITELLESÍTETT felhasználó szükséges.
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:
         password_hashers:
-            # By default, password hashers are resource intensive and take time. This is
-            # important to generate secure password hashes. In tests however, secure hashes
-            # are not important, waste resources and increase test times. The following
-            # reduces the work factor to the lowest possible values.
+            # Tesztekhez kisebb terhelésű hashelést használunk
             Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
                 algorithm: auto
-                cost: 4 # Lowest possible value for bcrypt
-                time_cost: 3 # Lowest possible value for argon
-                memory_cost: 10 # Lowest possible value for argon
+                cost: 4
+                time_cost: 3
+                memory_cost: 10
