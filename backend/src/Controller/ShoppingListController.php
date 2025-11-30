@@ -25,6 +25,7 @@ class ShoppingListController extends AbstractController
     public function index(): JsonResponse
     {
         $lists = $this->shoppingListRepository->findAll();
+        // findAll() helyett findBy(['owner' => $this->getUser()])
 
         return $this->json($lists, Response::HTTP_OK, [], ['groups' => ['list:read']]);
     }
@@ -50,6 +51,20 @@ class ShoppingListController extends AbstractController
         }
 
         return $this->json($list, Response::HTTP_OK, [], ['groups' => ['list:read']]);
+    }
+
+    #[Route('/{id}', name: 'app_shopping_list_update', methods: ['PATCH'])]
+    public function update(ShoppingList $list, Request $request): JsonResponse
+    {
+        if ($list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own this list.');
+        }
+
+        $updatedList = $this->serializer->deserialize($request->getContent(), ShoppingList::class,  'json', ['object_to_populate' => $list]);
+
+        $this->entityManager->flush();
+
+        return $this->json($updatedList, Response::HTTP_OK, [], ['groups' => ['list:read']]);
     }
 
     #[Route('/{id}', name: 'app_shopping_list_delete', methods: ['DELETE'])]

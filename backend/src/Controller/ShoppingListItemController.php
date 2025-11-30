@@ -26,6 +26,7 @@ class ShoppingListItemController extends AbstractController
     public function index(): JsonResponse
     {
         $items = $this->shoppingListItemRepository->findAll();
+        // findAll() helyett findItemsByOwner($this->getUser()) - a repositoryban létre kell hozni ezt a funkciót
 
         return $this->json($items, Response::HTTP_OK, [], ['groups' => ['list:read']]);
     }
@@ -33,18 +34,16 @@ class ShoppingListItemController extends AbstractController
     #[Route('/api/shopping_lists/{listId}/shopping_list_items', name: 'app_shopping_list_item_create', methods: ['POST'])]
     public function create(int $listId, Request $request): JsonResponse
     {
-        if (!$this->getUser() instanceof UserInterface) {
-            return new JsonResponse(['message' => 'User not authenticated.'], Response::HTTP_UNAUTHORIZED);
-        }
-
         $list = $this->entityManager->getRepository(ShoppingList::class)->find($listId);
         if (!$list) {
             return $this->json(['message' => 'ShoppingList not found.'], Response::HTTP_NOT_FOUND);
         }
 
-        $data = $request->getContent();
-        $item = $this->serializer->deserialize($data, ShoppingListItem::class, 'json');
+        if ($list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You can only add items to your own shopping lists.');
+        }
 
+        $item = $this->serializer->deserialize($request->getContent(), ShoppingListItem::class, 'json');
         $item->setShoppingList($list);
 
         $this->entityManager->persist($item);
@@ -57,7 +56,7 @@ class ShoppingListItemController extends AbstractController
     public function read(ShoppingListItem $item): JsonResponse
     {
         $list = $item->getShoppingList();
-        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+        if ($list->getOwner() !== $this->getUser()) {
             throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
         }
 
@@ -68,7 +67,7 @@ class ShoppingListItemController extends AbstractController
     public function update(ShoppingListItem $item, Request $request): JsonResponse
     {
         $list = $item->getShoppingList();
-        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+        if ($list->getOwner() !== $this->getUser()) {
             throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
         }
 
@@ -83,7 +82,16 @@ class ShoppingListItemController extends AbstractController
         if (isset($data['isCompleted'])) {
             $item->setIsCompleted((bool)$data['isCompleted']);
         }
-        // -- lista változtatás
+        if (isset($data['listId'])) {
+            $otherList = $this->entityManager->getRepository(ShoppingList::class)->find($data['listId']);
+            if (!$otherList) {
+                return $this->json(['message' => 'Other ShoppingList not found.'], Response::HTTP_NOT_FOUND);
+            }
+            if ($otherList->getOwner() !== $this->getUser()) {
+                throw $this->createAccessDeniedException('Access denied. You can only move items to your own lists.');
+            }
+            $item->setShoppingList($otherList);
+        }
 
         $this->entityManager->flush();
 
@@ -94,7 +102,7 @@ class ShoppingListItemController extends AbstractController
     public function delete(ShoppingListItem $item): JsonResponse
     {
         $list = $item->getShoppingList();
-        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+        if ($list->getOwner() !== $this->getUser()) {
             throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
         }
 
