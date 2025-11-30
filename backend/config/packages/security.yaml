@@ -20,6 +20,12 @@ security:
             pattern: ^/(_profiler|_wdt|/css|/images|/js)/
             security: false
 
+        # ÚJ TŰZFAL: CSAK a Refresh Token útvonalhoz
+        refresh_token:
+            pattern: ^/api/token/refresh$
+            stateless: true
+            refresh_jwt: ~ # Ez a kulcs mondja meg, hogy itt a refresh token-t kell figyelni
+
         # API FIREWALL: Minden /api/ kezdetű kérés
         api:
             pattern: ^/api
@@ -43,6 +49,7 @@ security:
         # Engedélyezzük az anonim hozzáférést a bejelentkezési útvonalhoz,
         # különben senki nem tudna bejelentkezni.
         - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         # Minden más /api/ kezdetű útvonalhoz (a login_check kivételével)
         # TELJESEN HITELLESÍTETT felhasználó szükséges.
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

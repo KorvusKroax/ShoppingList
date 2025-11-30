@@ -1,7 +1,8 @@
 @host = http://localhost
 @listId = 1
 @ownerId = 1
-@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjQ1MDA4MTgsImV4cCI6MTc2NDUwNDQxOCwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSJ9.gjz68TShAJfmy-3W47JaziRBP76YWUxp8npduqJsnkG1opQOKR-N1n4tmLl3RvQWvRJpL-8bXrIVOn77N2RNKIjS7cWIDPmirB7xKJ2Z52lxeZS1lSOLx_t_dZDXLuOSIuYHX8i6wbwvPNE-jVRfzkUqnLO8_6vVHdz8fkCS4lNklAOTP5NaNOqiQHVZJ_H6VpdUjvmTO0WVaZ9fK-EpP_GZfR_9Y2AZ5-Z_Q-ksC8GRVJKrqMdoiMlhSQndl8zZfPAa8zasjQErTY1LiqqJ03MuEr0oOYN49iVGKCUgqz9vCtQXQEuBwBGkRTS5oOG_fiQxohpsQIdTXUrK1b0qi8QhduLkSH597oJ4LdDe8WbHVkNTsjm47-LngKemxMTmzVE7msEddAQGxnw-3lrpeloaEul3uimvTuQNIe9aq39YZEhcIl2EO89ss4wT49hNDCxVkQqa5QyK0XB8KrIVZS-OvQTW5RAND5RglReHf0lan3cGWW-6ajx9GKfp01priB-hEtOzom6IFI-6zKmA7y-dlU3N2TJ1YMbpamJCpNljZJ9JKkXuckpV5Uck3_-3GN7wJXVz_hOL6Vucj8ysdH2yqMlpM53aO6TEQpQzGL-wfeqtbCo_20LLRvlMZgERTGjwKi39u0myxBCW2wjaaerc1hvtmBw9C3npCML8uGc
+@token = eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NjQ1MDQ0MzUsImV4cCI6MTc2NDUwODAzNSwicm9sZXMiOlsiUk9MRV9VU0VSIl0sImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSJ9.JJE1o5TFZrWz5VEz4Fqfovtoehtimnmj1l2bUEkI2TPhM-uml5hX5R9StHdcqjAB9FOC3kIiDYfuXpt74ZqWysinJU1YwdefugDbaftkjjYsN0MxpaiUCdRBy3a7jOf5qkZoUktnPX7uT42-NPK1RN_Ns-oVssCzYf_TVtjWUSRNhf7bKp_vH2pPm6MT_Vt0rCS78f-JDN1FV99DiDAIoZTj3tFsH0-3BHuRMMVqiySsGkycupMv-JL1yhcZ0FiNyfYLlOx8b_Ad9PKxy5rlmgn_wym44SfRVv9Jes_DGsU6ka3Y_qIrRzTnsyk0GTl73M1I5XJKJiyiIKk-ysTGDPponckKv9_Wm05LSGMYLxvjYedE76fxZT9mUytIuvj4Wv7GfTBbnuuTPEQcqmzgsCpdpsh-xJseBZ7P-l8htu85Hb1pA9kGJHKhPHBoQHSg4iVNRvaR75-fY0zq7kamaBDOUzOUS57fTysan2j_3TYpTH1CNrRO4ncAvRG1sVEZy4oLE_CoF9-hRXcL_Rhs2dpqce6lMK4YWgTjncdOPdvQJzQeOdr_5XsqajdXONuUEQ1igJeN01UGNzovsKi5UpQ57BWp4N0KsRmN1kfq_N9lMspSyaXCBA6NtMcVL22UAe0OfOSoLC4HYwT1QxJ9fa2Gf6-xm9ZqRwqj4HnGBHk
+@refresh_token = de770e620114ae3df9e7fda5fca50d5701800e718de3f3025827dadde8d59d36caad64764e63d31a87fccdf751a1f020b1dd6d9b3c9a8223bce54b80930529b6
 
 
 
@@ -17,10 +18,28 @@ Content-Type: application/json
 ###
 
 
+# Jogosultság Ellenőrzés
+GET {{host}}/api/shopping_lists/{{listId}}
+Authorization: Bearer {{token}}
+
+###
+
+
+# Refresh Token Használata (Új JWT szerzése)
+POST {{host}}/api/token/refresh
+Content-Type: application/json
+
+{
+    "refresh_token": "{{refresh_token}}"
+}
+
+###
+
+
 # Lista létrehozása (POST /api/shopping_lists)
 POST {{host}}/api/shopping_lists
-Authorization: Bearer {{token}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
     "name": "Másik lista"
@@ -32,7 +51,6 @@ Content-Type: application/json
 # Hitelesített Kérés (Listák Lekérdezése)
 GET {{host}}/api/shopping_lists
 Authorization: Bearer {{token}}
-Accept: application/json
 
 ###
 
@@ -40,7 +58,6 @@ Accept: application/json
 # Az össes item lekérdezése
 GET  {{host}}/api/shopping_list_items
 Authorization: Bearer {{token}}
-Accept: application/json
 
 ###
 
@@ -48,15 +65,14 @@ Accept: application/json
 # Hitelesített Kérés (item Lekérdezése)
 GET {{host}}/api/shopping_list_items/1
 Authorization: Bearer {{token}}
-Accept: application/json
 
 ###
 
 
 # Tétel hozzáadása egy listához (POST /api/shopping_lists/{listId}/shopping_list_items)
 POST {{host}}/api/shopping_lists/6/shopping_list_items
-Authorization: Bearer {{token}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
     "name": "Csipsz",
@@ -68,8 +84,8 @@ Content-Type: application/json
 
 # Tétel készre jelölése (PATCH /api/shopping_list_items/{id})
 PATCH {{host}}/api/shopping_list_items/5
-Authorization: Bearer {{token}}
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
     "isCompleted": true
