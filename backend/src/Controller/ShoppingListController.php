@@ -2,8 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\User; // Ideiglenesen a teszt userhez
-
 use App\Entity\ShoppingList;
 use App\Repository\ShoppingListRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[Route('/api/shopping_lists')]
 class ShoppingListController extends AbstractController
@@ -31,23 +30,16 @@ class ShoppingListController extends AbstractController
         return $this->json($lists, Response::HTTP_OK, [], ['groups' => ['list:read']]);
     }
 
-    #[Route('/{id}', name: 'app_shopping_list_show', methods: ['GET'])]
-    public function show(ShoppingList $list): JsonResponse
+    #[Route(name: 'app_shopping_list_create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
     {
-        return $this->json($list, Response::HTTP_OK, [], ['groups' => ['list:read']]);
-    }
+        if (!$this->getUser() instanceof UserInterface) {
+            return new JsonResponse(['message' => 'User not authenticated.'], Response::HTTP_UNAUTHORIZED);
+        }
 
-    #[Route(name: 'app_shopping_list_new', methods: ['POST'])]
-    public function new(Request $request): JsonResponse
-    {
         $data = $request->getContent();
-
         $list = $this->serializer->deserialize($data, ShoppingList::class, 'json');
-
-        // Ideiglenes Owner beállítása (1 ID-val feltételezzük)
-        // Ezt a részt a Security beállítása után ki kell cserélni: $this->getUser()
-        $tempOwner = $this->entityManager->getReference(User::class, 1);
-        $list->setOwner($tempOwner);
+        $list->setOwner($this->getUser());
 
         $this->entityManager->persist($list);
         $this->entityManager->flush();
@@ -55,10 +47,22 @@ class ShoppingListController extends AbstractController
         return $this->json($list, Response::HTTP_CREATED, [], ['groups' => ['list:read']]);
     }
 
+    #[Route('/{id}', name: 'app_shopping_list_read', methods: ['GET'])]
+    public function read(ShoppingList $list): JsonResponse
+    {
+        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own this list.');
+        }
+
+        return $this->json($list, Response::HTTP_OK, [], ['groups' => ['list:read']]);
+    }
+
     #[Route('/{id}', name: 'app_shopping_list_delete', methods: ['DELETE'])]
     public function delete(ShoppingList $list): JsonResponse
     {
-        // A Valódi kód itt ellenőrizné, hogy a lista a bejelentkezett felhasználóé-e
+        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own this list.');
+        }
 
         $this->entityManager->remove($list);
         $this->entityManager->flush();

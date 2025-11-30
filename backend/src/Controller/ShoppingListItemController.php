@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 class ShoppingListItemController extends AbstractController
 {
@@ -29,11 +30,14 @@ class ShoppingListItemController extends AbstractController
         return $this->json($items, Response::HTTP_OK, [], ['groups' => ['list:read']]);
     }
 
-    #[Route('/api/shopping_lists/{listId}/shopping_list_items', name: 'app_shopping_list_item_new', methods: ['POST'])]
-    public function new(int $listId, Request $request): JsonResponse
+    #[Route('/api/shopping_lists/{listId}/shopping_list_items', name: 'app_shopping_list_item_create', methods: ['POST'])]
+    public function create(int $listId, Request $request): JsonResponse
     {
-        $list = $this->entityManager->getRepository(ShoppingList::class)->find($listId);
+        if (!$this->getUser() instanceof UserInterface) {
+            return new JsonResponse(['message' => 'User not authenticated.'], Response::HTTP_UNAUTHORIZED);
+        }
 
+        $list = $this->entityManager->getRepository(ShoppingList::class)->find($listId);
         if (!$list) {
             return $this->json(['message' => 'ShoppingList not found.'], Response::HTTP_NOT_FOUND);
         }
@@ -49,9 +53,25 @@ class ShoppingListItemController extends AbstractController
         return $this->json($item, Response::HTTP_CREATED, [], ['groups' => ['item:read']]);
     }
 
+    #[Route('/api/shopping_list_items/{id}', name: 'app_shopping_list_item_read', methods: ['GET'])]
+    public function read(ShoppingListItem $item): JsonResponse
+    {
+        $list = $item->getShoppingList();
+        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
+        }
+
+        return $this->json($item, Response::HTTP_OK, [], ['groups' => 'item:read']);
+    }
+
     #[Route('/api/shopping_list_items/{id}', name: 'app_shopping_list_item_update', methods: ['PATCH'])]
     public function update(ShoppingListItem $item, Request $request): JsonResponse
     {
+        $list = $item->getShoppingList();
+        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
+        }
+
         $data = json_decode($request->getContent(), true);
 
         if (isset($data['name'])) {
@@ -63,6 +83,7 @@ class ShoppingListItemController extends AbstractController
         if (isset($data['isCompleted'])) {
             $item->setIsCompleted((bool)$data['isCompleted']);
         }
+        // -- lista változtatás
 
         $this->entityManager->flush();
 
@@ -72,6 +93,11 @@ class ShoppingListItemController extends AbstractController
     #[Route('/api/shopping_list_items/{id}', name: 'app_shopping_list_item_delete', methods: ['DELETE'])]
     public function delete(ShoppingListItem $item): JsonResponse
     {
+        $list = $item->getShoppingList();
+        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
+        }
+
         $this->entityManager->remove($item);
         $this->entityManager->flush();
 
