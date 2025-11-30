@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { apiFetcher } from '@/api/fetcher'; // Feltételezi, hogy a fetcher.ts elérése helyes
-
+import { useRouter } from 'next/navigation';
 
 // --- TÍPUSOK ---
 
@@ -46,9 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false); // Fontos a SSR/CSR szinkronizáláshoz
   const isAuthenticated = !!jwtToken;
-
-  // A Next.js router importálása (kliens komponens)
-  const { useRouter } = require('next/navigation');
   const router = useRouter();
 
   // 1. Inicializálás: Tokenek betöltése a localStorage-ból mount-kor

@@ -6,8 +6,6 @@ export default function DashboardPage() {
   // A useAuth hook segítségével lekérjük az állapotot és a logout funkciót
   const { jwtToken, logout } = useAuth();
 
-  // Megjegyzés: A valós jogosultság ellenőrzés (AuthGuard) a következő lépésben következik!
-
   return (
     <div style={{ maxWidth: '800px', margin: '50px auto' }}>
       <h1>Dashboard (Bevásárlólisták) 🛒</h1>
@@ -21,7 +19,7 @@ export default function DashboardPage() {
       />
 
       <button
-        onClick={() => logout(false)}
+        onClick={() => logout()}
         style={{ padding: '10px 20px', backgroundColor: 'red', color: 'white', border: 'none', borderRadius: '4px', marginTop: '20px' }}
       >
         Kijelentkezés
