@@ -6,5 +6,5 @@ lexik_jwt_authentication:
     user_id_claim: email
     token_extractors:
         authorization_header:
-            enabled: true   # Engedélyezzük a token kinyerését
-            prefix: Bearer  # Megadjuk a Bearer előtagot
+            enabled: true
+            prefix: Bearer

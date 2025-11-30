@@ -13,18 +13,21 @@ Content-Type: application/json
     "name": "Sürgős gyógyszertári lista"
 }
 
+###
 
 
 # Hitelesített Kérés (Listák Lekérdezése)
-GET http://localhost/api/shopping_lists
+GET {{host}}/api/shopping_lists
 Authorization: Bearer {{token}}
 Accept: application/json
 
+###
 
 
 # Az össes item lekérdezése
 GET  {{host}}/api/shopping_list_items
 
+###
 
 
 # Tétel hozzáadása egy listához (POST /api/shopping_lists/{listId}/shopping_list_items)
@@ -36,6 +39,7 @@ Content-Type: application/json
     "quantity": "1 kg"
 }
 
+###
 
 
 # Tétel készre jelölése (PATCH /api/shopping_list_items/{id})
@@ -46,19 +50,20 @@ Content-Type: application/json
     "isCompleted": true
 }
 
+###
 
 
 # Item törlése (DELETE /api/lists/{id})
 DELETE {{host}}/api/shopping_list_items/2
 
 
-
-# Lista törlése (DELETE /api/lists/{id})
+# 4. Lista törlése (DELETE /api/lists/{id})
 DELETE {{host}}/api/shopping_lists/5
 
+###
 
 
-# Bejelentkezés (Token Szerzés)
+### 1. Bejelentkezés (Token Szerzés)
 POST http://localhost/api/login_check
 Content-Type: application/json
 
@@ -66,3 +71,5 @@ Content-Type: application/json
     "email": "test@example.com",
     "password": "tesztjelszo"
 }
+
+###

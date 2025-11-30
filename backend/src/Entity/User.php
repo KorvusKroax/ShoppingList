@@ -49,19 +49,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    public function getRoles(): array
+    public function eraseCredentials(): void
     {
-        $roles = $this->roles;
-        // garantálja, hogy minden felhasználónak legyen legalább ROLE_USER
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
+        // Ha valamilyen ideiglenes, nem tartós adatot (pl. plain jelszót)
+        // tároltunk, azt itt törölhetjük.
     }
 
-    public function setRoles(array $roles): static
+    public function getId(): ?int
     {
-        $this->roles = $roles;
+        return $this->id;
+    }
 
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
         return $this;
     }
 
@@ -83,27 +89,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    public function eraseCredentials(): void
+    public function getRoles(): array
     {
-        // Ha valamilyen ideiglenes, nem tartós adatot (pl. plain jelszót)
-        // tároltunk, azt itt törölhetjük.
+        $roles = $this->roles;
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
     }
 
-    // --- Mezők (id, email) és Kapcsolatok (shoppingLists) Eredeti Metódusai ---
-
-    public function getId(): ?int
+    public function setRoles(array $roles): static
     {
-        return $this->id;
-    }
+        $this->roles = $roles;
 
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
         return $this;
     }
 

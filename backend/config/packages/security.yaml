@@ -26,8 +26,7 @@ security:
             stateless: true
             provider: app_user_provider
 
-            # --- VÁLTOZTATÁS ITT! jwt_json_login HELYETT json_login ---
-            json_login: # <<< Ezt használd!
+            json_login:
                 check_path: /api/login_check
                 username_path: email
                 password_path: password

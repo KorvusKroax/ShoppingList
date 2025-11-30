@@ -15,14 +15,13 @@ class ShoppingList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['list:read', 'item:read'])] // Lássuk az ID-t a listázásnál és a tétel lekérdezésnél
+    #[Groups(['list:read', 'item:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['list:read', 'item:read'])] // Lássuk a listák nevét
+    #[Groups(['list:read', 'item:read'])]
     private ?string $name = null;
 
-    // Kapcsolat a User entitással (owner)
     #[ORM\ManyToOne(inversedBy: 'shopping_lists')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['list:read'])]
@@ -67,20 +66,17 @@ class ShoppingList
     }
 
     /**
-     * @return Collection<int, LiShoppingListItemstItem>
+     * @return Collection<int, ShoppingListItem>
      */
-    // --- GETTER (Lekérdezi az összes tételt) ---
     public function getShoppingListItems(): Collection
     {
         return $this->shopping_list_items;
     }
 
-    // --- ADDER (Hozzáad egy tételt a listához) ---
     public function addShoppingListItem(ShoppingListItem $shoppingListItem): static
     {
         if (!$this->shopping_list_items->contains($shoppingListItem)) {
             $this->shopping_list_items->add($shoppingListItem);
-            // KÉTIRÁNYÚ KAPCSOLAT KEZELÉSE: Frissítjük a ShoppingListItem entitást is!
             if ($shoppingListItem->getShoppingList() !== $this) {
                 $shoppingListItem->setShoppingList($this);
             }
@@ -89,13 +85,9 @@ class ShoppingList
         return $this;
     }
 
-    // --- REMOVER (Eltávolít egy tételt a listából) ---
     public function removeItem(ShoppingListItem $shoppingListItem): static
     {
         if ($this->shopping_list_items->removeElement($shoppingListItem)) {
-            // KÉTIRÁNYÚ KAPCSOLAT KEZELÉSE:
-            // Ha a ShoppingListItem a listához tartozott (null-ra állítjuk a FK-t),
-            // de csak akkor, ha az entitás nem kerül törlésre (orphanRemoval: true)
             if ($shoppingListItem->getShoppingList() === $this) {
                 $shoppingListItem->setShoppingList(null);
             }

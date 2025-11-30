@@ -33,8 +33,8 @@ class UpdateUserPasswordCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         // --- 1. Felhasználó Adatainak Beállítása ---
-        $userEmail = 'test@example.com'; // A régi felhasználó e-mail címe
-        $newPlainPassword = 'tesztjelszo'; // A beállítani kívánt új jelszó
+        $userEmail = 'test@example.com';
+        $newPlainPassword = 'tesztjelszo';
 
         // --- 2. Felhasználó Betöltése az Adatbázisból ---
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $userEmail]);
@@ -45,10 +45,7 @@ class UpdateUserPasswordCommand extends Command
         }
 
         // --- 3. Jelszó Hashelése ---
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $user,
-            $newPlainPassword
-        );
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $newPlainPassword);
 
         // --- 4. Jelszó Frissítése és Mentés ---
         $user->setPassword($hashedPassword);

@@ -28,7 +28,6 @@ class ShoppingListItem
     #[Groups(['list:read', 'item:read'])]
     private ?bool $is_completed = false;
 
-    // Kapcsolat a ShoppingList entitáshoz
     #[ORM\ManyToOne(inversedBy: 'shopping_list_items')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['item:read'])]
@@ -61,7 +60,7 @@ class ShoppingListItem
         return $this;
     }
 
-    public function isIsCompleted(): ?bool
+    public function getIsCompleted(): ?bool
     {
         return $this->is_completed;
     }
