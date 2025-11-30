@@ -11,7 +11,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 #[Route('/api/shopping_lists')]
 class ShoppingListController extends AbstractController
@@ -33,10 +32,6 @@ class ShoppingListController extends AbstractController
     #[Route(name: 'app_shopping_list_create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
-        if (!$this->getUser() instanceof UserInterface) {
-            return new JsonResponse(['message' => 'User not authenticated.'], Response::HTTP_UNAUTHORIZED);
-        }
-
         $data = $request->getContent();
         $list = $this->serializer->deserialize($data, ShoppingList::class, 'json');
         $list->setOwner($this->getUser());
@@ -50,7 +45,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'app_shopping_list_read', methods: ['GET'])]
     public function read(ShoppingList $list): JsonResponse
     {
-        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+        if ($list->getOwner() !== $this->getUser()) {
             throw $this->createAccessDeniedException('Access denied. You do not own this list.');
         }
 
@@ -60,7 +55,7 @@ class ShoppingListController extends AbstractController
     #[Route('/{id}', name: 'app_shopping_list_delete', methods: ['DELETE'])]
     public function delete(ShoppingList $list): JsonResponse
     {
-        if (!$this->getUser() instanceof UserInterface || $list->getOwner() !== $this->getUser()) {
+        if ($list->getOwner() !== $this->getUser()) {
             throw $this->createAccessDeniedException('Access denied. You do not own this list.');
         }
 
