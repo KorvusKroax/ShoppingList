@@ -1,0 +1,15 @@
+2. 🧹 Tisztítás és Kezdőpont Létrehozása (Később)
+Amikor úgy érzed, hogy az alapséma (a Listák, Elemek, Tagok) már stabil, futtass egy tisztítási folyamatot:
+
+Töröld az összes meglévő migrációs fájlt a migrations/ mappából.
+
+Töröld a doctrine_migration_versions táblát (ha létezik) az adatbázisban.
+
+Generáld le az EGYETLEN, végleges alapséma fájlt:
+
+Bash
+
+docker compose exec backend php bin/console doctrine:migrations:diff
+(A diff parancs összehasonlítja az üres adatbázist a jelenlegi entitásokkal, és létrehozza a teljes séma létrehozásához szükséges parancsokat.)
+
+Ezzel egyetlen tiszta migrációs fájlod lesz, ami az alkalmazás induló állapotát reprezentálja. Utána térhetsz vissza a szabványos make:migration használatára.

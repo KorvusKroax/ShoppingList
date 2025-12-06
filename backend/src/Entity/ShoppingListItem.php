@@ -2,9 +2,9 @@
 
 namespace App\Entity;
 
-use App\Repository\ShoppingListItemRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use App\Repository\ShoppingListItemRepository;
 
 #[ORM\Entity(repositoryClass: ShoppingListItemRepository::class)]
 #[ORM\Table(name: 'shopping_list_item')]

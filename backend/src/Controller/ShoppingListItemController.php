@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Entity\ShoppingList;
 use App\Entity\ShoppingListItem;
-use App\Repository\ShoppingListItemRepository;
+// use App\Repository\ShoppingListItemRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -12,23 +12,39 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
 
 class ShoppingListItemController extends AbstractController
 {
     public function __construct(
-        private readonly ShoppingListItemRepository $shoppingListItemRepository,
+        // private readonly ShoppingListItemRepository $shoppingListItemRepository,
         private readonly EntityManagerInterface $entityManager,
         private readonly SerializerInterface $serializer
     ) { }
 
-    #[Route('/api/shopping_list_items', name: 'app_shopping_list_item_index', methods: ['GET'])]
-    public function index(): JsonResponse
-    {
-        $items = $this->shoppingListItemRepository->findAll();
-        // findAll() helyett findItemsByOwner($this->getUser()) - a repositoryban létre kell hozni ezt a funkciót
+    // #[Route('/api/shopping_list_items', name: 'app_shopping_list_item_index', methods: ['GET'])]
+    // public function index(): JsonResponse
+    // {
+    //     $items = $this->shoppingListItemRepository->findAll();
+    //     // findAll() helyett findItemsByOwner($this->getUser())
+    //     // TODO:a repositoryban létre kell hozni ezt a funkciót
 
-        return $this->json($items, Response::HTTP_OK, [], ['groups' => ['list:read']]);
+    //     return $this->json($items, Response::HTTP_OK, [], ['groups' => ['list:read']]);
+    // }
+
+    #[Route('/api/shopping_lists/{listId}/shopping_list_items', name: 'app_shopping_list_item_index_by_list', methods: ['GET'])]
+    public function indexByList(ShoppingList $list): JsonResponse
+    {
+        // 1. Jogosultság ellenőrzése a Param Converter után
+        if ($list->getOwner() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Access denied. You do not own this shopping list.');
+        }
+
+        // 2. A listaelemek lekérése a listából (a Doctrine automatikusan biztosítja ezt,
+        // feltételezve, hogy van egy 'items' property a ShoppingList entitásban)
+        $items = $list->getShoppingListItems();
+
+        // 3. Serializáció
+        return $this->json($items, Response::HTTP_OK, [], ['groups' => ['item:read']]);
     }
 
     #[Route('/api/shopping_lists/{listId}/shopping_list_items', name: 'app_shopping_list_item_create', methods: ['POST'])]

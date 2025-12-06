@@ -2,13 +2,14 @@
 
 namespace App\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Serializer\Annotation\Groups;
+use App\Entity\ShoppingList;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: 'user')]
@@ -33,9 +34,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'owner', targetEntity: ShoppingList::class, orphanRemoval: true)]
     private Collection $shopping_lists;
 
+    /**
+     * @var Collection<int, ShoppingList>
+     */
+    // 💡 Kétoldalú kapcsolat: ez a lista tartalmazza azokat a listákat,
+    // amikhez a felhasználó hozzá lett adva tagként.
+    #[ORM\ManyToMany(targetEntity: ShoppingList::class, mappedBy: 'members')]
+    private Collection $sharedShoppingLists;
+
     public function __construct()
     {
         $this->shopping_lists = new ArrayCollection();
+        $this->sharedShoppingLists = new ArrayCollection();
     }
 
     /**
@@ -110,5 +120,32 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getShoppingLists(): Collection
     {
         return $this->shopping_lists;
+    }
+
+    /**
+     * @return Collection<int, ShoppingList>
+     */
+    public function getSharedShoppingLists(): Collection
+    {
+        return $this->sharedShoppingLists;
+    }
+
+    public function addSharedShoppingList(ShoppingList $sharedShoppingList): static
+    {
+        if (!$this->sharedShoppingLists->contains($sharedShoppingList)) {
+            $this->sharedShoppingLists->add($sharedShoppingList);
+            $sharedShoppingList->addMember($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSharedShoppingList(ShoppingList $sharedShoppingList): static
+    {
+        if ($this->sharedShoppingLists->removeElement($sharedShoppingList)) {
+            $sharedShoppingList->removeMember($this);
+        }
+
+        return $this;
     }
 }

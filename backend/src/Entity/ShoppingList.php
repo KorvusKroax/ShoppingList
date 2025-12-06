@@ -2,11 +2,12 @@
 
 namespace App\Entity;
 
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use App\Repository\ShoppingListRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
+use App\Entity\User;
 
 #[ORM\Entity(repositoryClass: ShoppingListRepository::class)]
 #[ORM\Table(name: 'shopping_list')]
@@ -31,9 +32,17 @@ class ShoppingList
     #[Groups(['list:read'])]
     private Collection $shopping_list_items;
 
+    /**
+     * @var Collection<int, User>
+     */
+    // 💡 Ez a sor hozza létre a kapcsoló táblát az adatbázisban
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'sharedShoppingLists')]
+    private Collection $members;
+
     public function __construct()
     {
         $this->shopping_list_items = new ArrayCollection();
+        $this->members = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -92,6 +101,27 @@ class ShoppingList
                 $shoppingListItem->setShoppingList(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getMembers(): Collection
+    {
+        return $this->members;
+    }
+
+    public function addMember(User $member): static
+    {
+        if (!$this->members->contains($member)) {
+            $this->members->add($member);
+        }
+
+        return $this;
+    }
+
+    public function removeMember(User $member): static
+    {
+        $this->members->removeElement($member);
 
         return $this;
     }
