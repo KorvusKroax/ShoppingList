@@ -94,7 +94,7 @@ class ShoppingList
         return $this;
     }
 
-    public function removeItem(ShoppingListItem $shoppingListItem): static
+    public function removeShoppingListItem(ShoppingListItem $shoppingListItem): static
     {
         if ($this->shopping_list_items->removeElement($shoppingListItem)) {
             if ($shoppingListItem->getShoppingList() === $this) {

@@ -21,6 +21,24 @@ class ShoppingListItemController extends AbstractController
         private readonly SerializerInterface $serializer
     ) { }
 
+    protected function canAccessList(ShoppingList $list): bool
+    {
+        $user = $this->getUser();
+
+        // Először ellenőrizzük, hogy a felhasználó be van-e jelentkezve
+        if (!$user) {
+            return false;
+        }
+
+        // A jogosultság feltételei (a megosztás figyelembevételével):
+        // 1. A felhasználó a tulajdonos (owner)
+        // VAGY
+        // 2. A felhasználó a listához hozzáadott tagok (members) között van
+
+        // A getMembers()->contains($user) a Many-to-Many kapcsolatot ellenőrzi
+        return $list->getOwner() === $user || $list->getMembers()->contains($user);
+    }
+
     // #[Route('/api/shopping_list_items', name: 'app_shopping_list_item_index', methods: ['GET'])]
     // public function index(): JsonResponse
     // {
@@ -35,8 +53,8 @@ class ShoppingListItemController extends AbstractController
     public function indexByList(ShoppingList $list): JsonResponse
     {
         // 1. Jogosultság ellenőrzése a Param Converter után
-        if ($list->getOwner() !== $this->getUser()) {
-            throw $this->createAccessDeniedException('Access denied. You do not own this shopping list.');
+        if (!$this->canAccessList($list)) {
+            throw $this->createAccessDeniedException('Access denied. You do not have permission.');
         }
 
         // 2. A listaelemek lekérése a listából (a Doctrine automatikusan biztosítja ezt,
@@ -55,8 +73,8 @@ class ShoppingListItemController extends AbstractController
             return $this->json(['message' => 'ShoppingList not found.'], Response::HTTP_NOT_FOUND);
         }
 
-        if ($list->getOwner() !== $this->getUser()) {
-            throw $this->createAccessDeniedException('Access denied. You can only add items to your own shopping lists.');
+        if (!$this->canAccessList($list)) {
+            throw $this->createAccessDeniedException('Access denied. You do not have permission to add items.');
         }
 
         $item = $this->serializer->deserialize($request->getContent(), ShoppingListItem::class, 'json');
@@ -72,8 +90,8 @@ class ShoppingListItemController extends AbstractController
     public function read(ShoppingListItem $item): JsonResponse
     {
         $list = $item->getShoppingList();
-        if ($list->getOwner() !== $this->getUser()) {
-            throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
+        if (!$this->canAccessList($list)) {
+            throw $this->createAccessDeniedException('Access denied. You do not have permission to view this item.');
         }
 
         return $this->json($item, Response::HTTP_OK, [], ['groups' => 'item:read']);
@@ -83,8 +101,8 @@ class ShoppingListItemController extends AbstractController
     public function update(ShoppingListItem $item, Request $request): JsonResponse
     {
         $list = $item->getShoppingList();
-        if ($list->getOwner() !== $this->getUser()) {
-            throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
+        if (!$this->canAccessList($list)) {
+            throw $this->createAccessDeniedException('Access denied. You do not have permission to update this item.');
         }
 
         $data = json_decode($request->getContent(), true);
@@ -103,8 +121,8 @@ class ShoppingListItemController extends AbstractController
             if (!$otherList) {
                 return $this->json(['message' => 'Other ShoppingList not found.'], Response::HTTP_NOT_FOUND);
             }
-            if ($otherList->getOwner() !== $this->getUser()) {
-                throw $this->createAccessDeniedException('Access denied. You can only move items to your own lists.');
+            if (!$this->canAccessList($otherList)) {
+                throw $this->createAccessDeniedException('Access denied. You do not have permission to move items.');
             }
             $item->setShoppingList($otherList);
         }
@@ -118,8 +136,8 @@ class ShoppingListItemController extends AbstractController
     public function delete(ShoppingListItem $item): JsonResponse
     {
         $list = $item->getShoppingList();
-        if ($list->getOwner() !== $this->getUser()) {
-            throw $this->createAccessDeniedException('Access denied. You do not own the parent shopping list.');
+        if (!$this->canAccessList($list)) {
+            throw $this->createAccessDeniedException('Access denied. You do not have permission to delete this item.');
         }
 
         $this->entityManager->remove($item);
